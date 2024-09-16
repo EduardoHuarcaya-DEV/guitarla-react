@@ -5,12 +5,86 @@ import { db } from "./data/db"
 
 function App() {
 
-  const [data, setData] = useState(db)
-  console.log(data)
+  const initialCard = () => {
+    const localStorageCard = localStorage.getItem('cart')
+    return localStorageCard ? JSON.parse(localStorageCard) : []
+  }
+  const [data] = useState(db)
+  const [cart, setCart] = useState(initialCard)
+
+  const MAX_ITEM = 5
+  const MIN_ITEM = 1
+
+  useEffect( () => {
+    localStorage.setItem('cart', JSON.stringify(cart))
+  })
+
+  function addToCart(item){
+
+    const itemExist = cart.findIndex(guitar => guitar.id === item.id)
+
+    if(itemExist >= 0){
+      if(cart[itemExist].quantity >= MAX_ITEM){
+        return
+      }
+      // Crear una copia del carrito existente
+      const updatedCart = [...cart]
+      // Actualizar la cantidad del item
+      updatedCart[itemExist].quantity++
+      // Actualizar el estado del carrito
+      setCart(updatedCart)
+      
+    }else{
+      item.quantity = 1
+      setCart([...cart, item])
+    }
+
+  }
+
+  function removeFromCart(id){
+      setCart(prevCart => prevCart.filter(guitar => guitar.id !== id))
+  }
+
+  function increaseQuantity(id){
+    const updatedCart = cart.map(item => {
+      if(item.id === id && item.quantity < MAX_ITEM ){
+        return {
+          ...item,
+          quantity : item.quantity + 1
+        }
+      }
+      return item
+    
+  })
+  setCart(updatedCart)
+}
+
+  function decreaseQuantity(id){
+    const updatedCart = cart.map(item => {
+      if(item.id === id && item.quantity > MIN_ITEM){
+        return {
+          ...item,
+          quantity: item.quantity - 1
+        }
+      }
+      return item
+    })
+    setCart(updatedCart)
+  }
+  
+  function clearCart(){
+    setCart([])
+  }
 
   return (
     <>
-    <Header/>
+    <Header
+      cart = {cart}
+      removeFromCart={removeFromCart}
+      increaseQuantity={increaseQuantity}
+      decreaseQuantity={decreaseQuantity}
+      clearCart={clearCart}
+    />
       
     
 
@@ -18,8 +92,12 @@ function App() {
         <h2 className="text-center">Nuestra Colección</h2>
 
         <div className="row mt-5">
-          {data.map(() => (
-            <Guitar/>
+          {data.map((guitar) => (
+            <Guitar
+              key={guitar.id}
+              guitar = {guitar}
+              addToCart = {addToCart}
+            />
           ))}
             
         </div>
